@@ -64,7 +64,7 @@ if(MSVC)
 	
 	install(TARGETS ${PLUGIN_NAME} RUNTIME DESTINATION ${GUI_BIN_DIR}/plugins  CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES})
 
-	set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
+	set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/windows)
 elseif(LINUX)
 	target_link_libraries(${PLUGIN_NAME} GL X11 Xext Xinerama asound dl freetype pthread rt)
 	set_property(TARGET ${PLUGIN_NAME} APPEND_STRING PROPERTY LINK_FLAGS
@@ -91,7 +91,18 @@ foreach( src_file IN ITEMS ${SRC_FILES})
 	source_group("${group_name}" FILES "${src_file}")
 endforeach()
 
+#copy dlls when installing
+if (MSVC)
+	install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/windows/bin/${CMAKE_LIBRARY_ARCHITECTURE}/ DESTINATION ${GUI_BIN_DIR}/shared CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES})
+endif()
+
 #additional libraries, if needed
+find_library(ZMQ_LIBRARIES NAMES libzmq-mt-4_3_4)
+find_path(ZMQ_INCLUDE_DIRS zmq.h)
+
+target_include_directories(${PLUGIN_NAME} PUBLIC ${ZMQ_INCLUDE_DIRS})
+target_link_libraries(${PLUGIN_NAME} ${ZMQ_LIBRARIES})
+target_compile_definitions(${PLUGIN_NAME} PRIVATE ZEROMQ $<$<PLATFORM_ID:Windows>:_SCL_SECURE_NO_WARNINGS>)
 #find_package(LIBNAME)
 #or
 #find_library(LIBNAME_LIBRARIES NAMES libname)
