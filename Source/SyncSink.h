@@ -69,6 +69,11 @@ namespace SyncSinkSpace
 
 		*/
 		//void updateSettings() override;
+	private:
+		void* context;
+		void* socket;
+		int dataport;
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SyncSink);
 
 	};
 }
