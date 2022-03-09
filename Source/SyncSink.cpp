@@ -70,21 +70,24 @@ void SyncSink::process(AudioSampleBuffer& buffer)
 
 	for (int chan = 0; chan < numChannels; chan++)
 	{
-		const float *sample = buffer.getReadPointer(chan);
-		int numSamples = getNumSamples(chan);
-		int64 timestamp = getTimestamp(chan);
+		// const float *sample = buffer.getReadPointer(chan);
+		// int numSamples = getNumSamples(chan);
+		// int64 timestamp = getTimestamp(chan);
+		// const float sampleRate = getSampleRate(chan);
 
-		DynamicObject *obj = new DynamicObject();
-		obj->setProperty("data_type", "cts");
-		obj->setProperty("channel", chan);
-		obj->setProperty("timestamp", timestamp);
-		obj->setProperty("num_samples", numSamples);
-		const Array<var> raw(sample, numSamples);
-		obj->setProperty("content", raw);
-		var json (obj);
-		String s = JSON::toString(json);
-		void *str = (void *) s.toRawUTF8();
-		zmq_send(socket, str, strlen((const char *)str), 0);
+		// DynamicObject *obj = new DynamicObject();
+		// obj->setProperty("data_type", "cts");
+		// obj->setProperty("channel", chan);
+		// obj->setProperty("timestamp", timestamp);
+		// obj->setProperty("num_samples", numSamples);
+		// const Array<var> raw(sample, numSamples);
+		// obj->setProperty("content", raw);
+		// obj->setProperty("sample_rate", sampleRate);
+		// var json (obj);
+		// String s = JSON::toString(json);
+		// std::cout << s << std::endl;
+		// void *str = (void *) s.toRawUTF8();
+		// zmq_send(socket, str, strlen((const char *)str), 0);
 		// zmq_send(socket, "data", 4, ZMQ_SNDMORE);
 		// zmq_send(socket, sample, sizeof(float)*numSamples, 0);
 		
@@ -97,3 +100,70 @@ void SyncSink::process(AudioSampleBuffer& buffer)
 
 }
 
+void SyncSink::handleEvent(const EventChannel* eventInfo,
+	const MidiMessage& event, int samplePosition)
+{
+	if (Event::getEventType(event) == EventChannel::TTL)
+	{
+		TTLEventPtr ttl = TTLEvent::deserializeFromMessage(event, eventInfo);
+	}
+	else if (Event::getEventType(event) == EventChannel::TEXT)
+	{
+		TextEventPtr txt = TextEvent::deserializeFromMessage(event, eventInfo);
+		String text = txt->getText();
+		const float sampleRate = txt->getChannelInfo()->getSampleRate();
+		int64 timestamp = txt->getTimestamp();
+		DynamicObject *obj = new DynamicObject();
+		obj->setProperty("data_type", "event_text");
+		obj->setProperty("timestamp", timestamp);
+		obj->setProperty("content", text);
+		obj->setProperty("sample_rate", sampleRate);
+		var json (obj);
+		String s = JSON::toString(json);
+		void *str = (void *) s.toRawUTF8();
+		// std::cout << s << std::endl;
+		zmq_send(socket, str, strlen((const char *)str), 0);
+	}
+}
+
+void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
+	const MidiMessage& event, int samplePosition)
+{
+	SpikeEventPtr spike = SpikeEvent::deserializeFromMessage(event, spikeInfo);
+	if (spike)
+	{
+		const SpikeChannel *chan = spike->getChannelInfo();
+		int64 numChannels = chan->getNumChannels();
+		int64 numSamples = chan->getTotalSamples();
+		int64 timestamp = spike->getTimestamp();
+		const float sampleRate = chan->getSampleRate();
+		const float *waveform = spike->getDataPointer();
+		const Array<var> raw(waveform, numSamples);
+		DynamicObject *obj = new DynamicObject();
+		obj->setProperty("data_type", "spike");
+		obj->setProperty("sample_rate", sampleRate);
+		obj->setProperty("num_samples", numSamples);
+		int64 nodeID = chan->getCurrentNodeID();
+		int64 spikeChannelIdx = getSpikeChannelIndex(spike);
+		int64 sortedID = spike->getSortedID();
+		obj->setProperty("sorted_id", sortedID);
+		obj->setProperty("spike_channel_idx", spikeChannelIdx);
+		obj->setProperty("content", raw);
+		
+		/**
+		 * @brief on sending spike information
+		 * automatic clustering
+		 * one channel: multiple units (neurons); clustering in PCA space
+		 * - specify hyperparameters: num neurons, as well as min sep
+		 * TODO: need to get pca space coordinates (?)
+		 */
+		
+		// obj->setProperty("channel", );
+		obj->setProperty("timestamp", timestamp);
+		var json (obj);
+		String s = JSON::toString(json);
+		void *str = (void *) s.toRawUTF8();
+		// std::cout << s << std::endl;
+		zmq_send(socket, str, strlen((const char *)str), 0);
+	}
+}

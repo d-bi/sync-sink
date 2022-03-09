@@ -41,13 +41,13 @@ namespace SyncSinkSpace
 
 		Called automatically for each received event whenever checkForEvents() is called from process()		
 		*/
-		//void handleEvent(const EventChannel* eventInfo, const MidiMessage& event, int samplePosition) override;
+		void handleEvent(const EventChannel* eventInfo, const MidiMessage& event, int samplePosition) override;
 
 		/** Handles spikes received by the processor
 
 		Called automatically for each received event whenever checkForEvents(true) is called from process()
 		*/
-		//void handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition) override;
+		void handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition) override;
 
 		/** The method that standard controls on the editor will call.
 		It is recommended that any variables used by the "process" function
