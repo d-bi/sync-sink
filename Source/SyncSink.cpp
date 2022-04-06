@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include "SyncSink.h"
+#include <vector>
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -123,6 +124,75 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		void *str = (void *) s.toRawUTF8();
 		// std::cout << s << std::endl;
 		zmq_send(socket, str, strlen((const char *)str), 0);
+		
+		/* Parse Kofiko */
+		// Beginning of trial: add conditions
+		if (text.startsWith("ClearDesign"))
+		{
+			conditionMap.clear();
+			numConditions = 0;
+		}
+		else if (text.startsWith("AddCondition"))
+		{
+			StringArray tokens;
+			tokens.addTokens(text, true);
+			/* tokens[0] == AddCondition; tokens[1] == Name; tokens[2] == STIMCLASS;
+			   tokens[3] == Visible; tokens[4] == 1; tokens[5] == TrialTypes; */
+			for (int i = 6; i < tokens.size(); i++)
+			{
+				std::cout << tokens[i] << std::endl;
+				conditionMap.set(tokens[i], tokens[2]);
+				conditionList.set(tokens[2], numConditions);
+			}
+			numConditions += 1;
+		}
+		else if (text.startsWith("TrialStart"))
+		{
+			StringArray tokens;
+			tokens.addTokens(text, true);
+			/* tokens[0] == TrialStart; tokens[1] == IMGID */
+			if (conditionMap.contains(tokens[1]))
+			{
+				currentStimClass = conditionList[conditionMap[tokens[1]]];
+				nTrials += 1;
+			}
+			else
+			{
+				std::cout << "Image ID " << tokens[1] << " not mappable to stimulus class!" << std::endl;
+			}
+			std::cout << "TrialStart for image " << tokens[1] << " at " << timestamp << std::endl;
+		}
+		else if (text.startsWith("TrialAlign"))
+		{
+			std::cout << "TrialAlign at " << timestamp << std::endl;
+			currentTrialStartTime = timestamp;
+			inTrial = true;
+		}
+		else if (text.startsWith("TrialEnd"))
+		{
+			std::cout << "TrialEnd at " << timestamp << std::endl;
+			currentTrialStartTime = -1;
+			currentStimClass = -1;
+			inTrial = false;
+			for (std::vector<std::vector<std::vector<double>>> channelTensor : spikeTensor)
+			{
+				for (std::vector<std::vector<double>> unitTensor : channelTensor)
+				{
+					for (std::vector<double> conditionTensor : unitTensor)
+					{
+						for (double val : conditionTensor)
+						{
+							val *= double(nTrials) / double(nTrials + 1);
+							std::cout << val << " ";
+						}
+						std::cout << std::endl;
+					}
+					std::cout << std::endl;
+				}
+				std::cout << std::endl;
+			}
+			std::cout << std::endl;
+		}
 	}
 }
 
@@ -148,7 +218,7 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		int64 sortedID = spike->getSortedID();
 		obj->setProperty("sorted_id", sortedID);
 		obj->setProperty("spike_channel_idx", spikeChannelIdx);
-		obj->setProperty("content", raw);
+		// obj->setProperty("content", raw);
 		
 		/**
 		 * @brief on sending spike information
@@ -165,5 +235,44 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		void *str = (void *) s.toRawUTF8();
 		// std::cout << s << std::endl;
 		zmq_send(socket, str, strlen((const char *)str), 0);
+
+
+		if (!inTrial)
+		{
+			return; // do not process spike when stimulus is not presented
+		}
+
+		/* Store in spikeTensor */
+//		std::cout << "spike channel idx " << String(spikeChannelIdx) << std::endl;
+		while (spikeTensor.size() < (spikeChannelIdx + 1))
+		{
+			std::vector<std::vector<std::vector<double>>> thisChannelSpikeTensor;
+//			std::cout << "create channel tensor " << String(spikeTensor.size()) << std::endl;
+			spikeTensor.push_back(thisChannelSpikeTensor);
+		}
+
+//		std::cout << "spike sorted id " << String(sortedID) << std::endl;
+		while (spikeTensor[spikeChannelIdx].size() < (sortedID + 1))
+		{
+			std::vector<std::vector<double>> thisUnitSpikeTensor;
+//			std::cout << "create unit tensor" << String(spikeTensor[spikeChannelIdx].size()) << std::endl;
+			spikeTensor[spikeChannelIdx].push_back(thisUnitSpikeTensor);
+		}
+		
+		while (spikeTensor[spikeChannelIdx][sortedID].size() < numConditions)
+		{
+			std::vector<double> thisConditionSpikeTensor(nBins);
+//			std::cout << "create condition tensor" << String(spikeTensor[spikeChannelIdx][sortedID].size()) << std::endl;
+			spikeTensor[spikeChannelIdx][sortedID].push_back(thisConditionSpikeTensor);
+		}
+//		std::vector<double> thisConditionSpikeTensor = thisUnitSpikeTensor[currentStimClass];
+		
+		double offset = double(timestamp - currentTrialStartTime) / double(sampleRate);
+		int bin = floor(offset / 0.01);
+		if (bin < nBins)
+		{
+			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] = double(1) / double(nTrials); // assignment not working
+//			std::cout << spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] << " ";
+		}
 	}
 }

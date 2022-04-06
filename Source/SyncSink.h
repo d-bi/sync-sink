@@ -3,6 +3,7 @@
 #define SYNCSINK_H_DEFINED
 
 #include <ProcessorHeaders.h>
+#include <vector>
 
 //namespace must be an unique name for your plugin
 namespace SyncSinkSpace
@@ -70,6 +71,16 @@ namespace SyncSinkSpace
 		*/
 		//void updateSettings() override;
 	private:
+		HashMap<String, String> conditionMap; // hashmap for image ids
+		HashMap<String, int> conditionList; // hashmap for condition indexing
+		int numConditions = 1;
+		int currentStimClass = -1;
+		int64 currentTrialStartTime = -1;
+		bool inTrial = false;
+		std::vector<std::vector<std::vector<std::vector<double>>>> spikeTensor; // n_channels * n_units * n_stim_classes * n_bins tensor for spike counts
+
+		int nBins = 50;
+		int nTrials = 0;
 		void* context;
 		void* socket;
 		int dataport;
