@@ -9,6 +9,7 @@ SyncSinkEditor::SyncSinkEditor(SyncSink* parentNode, bool useDefaultParameterEdi
    : VisualizerEditor(parentNode, useDefaultParameterEditors)
 {
    processor = parentNode;
+   processor->setEditor(this);
 
    tabText = "Sync Sink";
    int silksize;
@@ -24,10 +25,15 @@ SyncSinkEditor::SyncSinkEditor(SyncSink* parentNode, bool useDefaultParameterEdi
     addPlotButton->setBounds(10, 60, 100, 20);
     addAndMakeVisible(addPlotButton);
 
-    addPlotParams = new Label("Parameters", "0,0,0");
-    addPlotParams->setEditable(true);
-    addPlotParams->setBounds(10, 30, 100, 20);
-    addAndMakeVisible(addPlotParams);
+    addPlotParamsLabel = new Label("Parameters", "0,0,0");
+    addPlotParamsLabel->setEditable(true);
+    addPlotParamsLabel->setBounds(10, 30, 100, 20);
+    addAndMakeVisible(addPlotParamsLabel);
+
+    stimClassLegendLabel = new Label("Stimuli Classes", "Stimuli Classes");
+    stimClassLegendLabel->setEditable(false);
+    stimClassLegendLabel->setBounds(120, 30, 100, 100);
+    addAndMakeVisible(stimClassLegendLabel);
 
 }
 
@@ -40,11 +46,11 @@ void SyncSinkEditor::buttonEvent(Button* button)
     if (button == addPlotButton)
     {
         StringArray tokens;
-        tokens.addTokens(addPlotParams->getText(), ",", "");
+        tokens.addTokens(addPlotParamsLabel->getText(), ",", "");
         /* tokens[0] == channel_idx; tokens[1] == sorted_id; tokens[2] == stim_class*/
         if (tokens.size() != 3)
         {
-            std::cout << "unable to parse plot param string " << addPlotParams->getText() << std::endl;
+            std::cout << "unable to parse plot param string " << addPlotParamsLabel->getText() << std::endl;
         }
         processor->addPSTHPlot(
             tokens[0].getIntValue(),
@@ -52,6 +58,18 @@ void SyncSinkEditor::buttonEvent(Button* button)
             tokens[2].getIntValue());
     }
 }
+
+void SyncSinkEditor::updateLegend()
+{
+    String legendText = "";
+    for (int i = 0; i < processor->numConditions; i++)
+    {
+        legendText += String(i) + String(": ") + processor->getStimClass(i) + String("\n");
+    }
+    std::cout << legendText << std::endl;
+    stimClassLegendLabel->setText(legendText, juce::dontSendNotification);
+}
+
 
 Visualizer* SyncSinkEditor::createNewCanvas()
 {

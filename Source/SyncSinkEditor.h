@@ -17,6 +17,7 @@ namespace SyncSinkSpace
             ~SyncSinkEditor();
             void updateSettings() override;
             void buttonEvent(Button* button) override;
+            void updateLegend();
 
             Visualizer* createNewCanvas();
             SyncSinkCanvas* syncSinkCanvas;
@@ -25,7 +26,7 @@ namespace SyncSinkSpace
         SyncSink* processor;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SyncSinkEditor);
         ScopedPointer<UtilityButton> addPlotButton;
-        ScopedPointer<Label> addPlotParams;
+        ScopedPointer<Label> addPlotParamsLabel, stimClassLegendLabel;
         Font font;
     };
 }

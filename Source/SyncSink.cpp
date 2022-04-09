@@ -140,6 +140,9 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		if (text.startsWith("ClearDesign"))
 		{
 			conditionMap.clear();
+			conditionList.clear();
+			conditionListInverse.clear();
+			spikeTensor.clear();
 			numConditions = 0;
 		}
 		else if (text.startsWith("AddCondition"))
@@ -156,6 +159,10 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 				conditionListInverse.set(numConditions, tokens[2]);
 			}
 			numConditions += 1;
+			if (thisEditor != nullptr) 
+			{
+				thisEditor->updateLegend();
+			}
 		}
 		else if (text.startsWith("TrialStart"))
 		{
@@ -197,7 +204,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 					{
 						for (double val : conditionTensor)
 						{
-							val *= double(nTrials) / double(nTrials + 1);
+//							val *= double(nTrials) / double(nTrials + 1);
 //							std::cout << val << " ";
 						}
 //						std::cout << std::endl;
@@ -252,7 +259,7 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		zmq_send(socket, str, strlen((const char *)str), 0);
 
 
-		if (!inTrial)
+		if (!inTrial || numConditions < 0 || currentStimClass < 0 || currentTrialStartTime < 0)
 		{
 			return; // do not process spike when stimulus is not presented
 		}
@@ -286,7 +293,7 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		int bin = floor(offset / 0.01);
 		if (bin < nBins)
 		{
-			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] = double(1) / double(nTrials); // assignment not working
+			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] += double(1);// / double(nTrials); // assignment not working
 //			std::cout << spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] << " ";
 		}
 	}
@@ -317,6 +324,11 @@ void SyncSink::setCanvas(SyncSinkCanvas* c)
 	canvas = c;
 }
 
+void SyncSinkSpace::SyncSink::setEditor(SyncSinkEditor* e)
+{
+	thisEditor = e;
+}
+
 void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, int stim_class)
 {
 	if (canvas != nullptr) {
@@ -325,4 +337,13 @@ void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, int stim_class)
 			<< std::endl;
 		canvas->addPlot(channel_idx, sorted_id, stim_class);
 	}
+}
+
+String SyncSink::getStimClass(int stim_class)
+{
+	if (conditionListInverse.contains(stim_class))
+	{
+		return conditionListInverse[stim_class];
+	}
+	return "";
 }

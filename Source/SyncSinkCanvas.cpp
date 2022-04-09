@@ -66,7 +66,7 @@ void SyncSinkCanvas::buttonClicked(Button* button)
 void SyncSinkCanvas::resized()
 {
     viewport->setBounds(0, 0, getWidth(), getHeight());
-    display->setBounds(0, 0, 300, 300);
+    display->setBounds(0, 0, getWidth(), getHeight());
 }
 
 void SyncSinkCanvas::updatePlots()
@@ -102,8 +102,11 @@ void SyncSinkDisplay::resized()
     setBounds(0, 0, getWidth(), getHeight());
     if (plots.size() > 0)
     {
-        plots[0]->setBounds(0, 0, getWidth(), getHeight());
-        std::cout << plots[0]->getX() << " " << plots[0]->getY() << " " << plots[0]->getWidth() << " " << plots[0]->getHeight() << std::endl;
+        for (PSTHPlot* plot : plots) {
+            int w_i = plot->identifier % 4;
+            int h_i = plot->identifier / 4;
+            plot->setBounds(w_i * getWidth() / 4, h_i * getHeight() / 2, getWidth() / 4, getHeight() / 2);
+        }
     }
 }
 
@@ -131,16 +134,25 @@ void SyncSinkDisplay::addPSTHPlot(int channel_idx, int sorted_id, int stim_class
         << "; sorted_id=" << sorted_id
         << "; stim_class=" << stim_class
         << std::endl;
-    PSTHPlot* plot = new PSTHPlot(processor, canvas, channel_idx, sorted_id, stim_class);
+    PSTHPlot* plot = new PSTHPlot(processor, canvas, this, channel_idx, sorted_id, stim_class, (plotCounter++) % 8);
     addAndMakeVisible(plot);
     plots.add(plot);
+    while (plots.size() > 8) {
+        plots.remove(0);
+    }
+    std::cout << plots.size() << std::endl;
 }
 
-PSTHPlot::PSTHPlot(SyncSink* s, SyncSinkCanvas* c, int channel_idx, int sorted_id, int stim_class) :
-    canvas(c), processor(s), channel_idx(channel_idx), sorted_id(sorted_id), stim_class(stim_class)
+PSTHPlot::PSTHPlot(SyncSink* s, SyncSinkCanvas* c, SyncSinkDisplay* d,
+    int channel_idx, int sorted_id, int stim_class, int identifier) :
+    canvas(c), processor(s), display(d),
+    channel_idx(channel_idx), sorted_id(sorted_id), stim_class(stim_class),
+    identifier(identifier)
 {
     font = Font("Default", 15, Font::plain);
-    setBounds(0, 0, 300, 300);
+    int w_i = identifier % 4;
+    int h_i = identifier / 4;
+    setBounds(w_i * d->getWidth() / 4, h_i * d->getHeight() / 2, d->getWidth() / 4, d->getHeight() / 2);
 }
 
 PSTHPlot::~PSTHPlot()
@@ -150,10 +162,10 @@ PSTHPlot::~PSTHPlot()
 void PSTHPlot::paint(Graphics& g)
 {
     g.fillAll(Colours::white);
-    std::cout << "psth paint" << getWidth() << getHeight() << std::endl;
+    std::cout << "psth paint " << identifier << std::endl;
     g.drawRect(0, 0, getWidth(), getHeight());
     g.setFont(font);
-    g.drawText(String::formatted("PSTH PLOT %d %d %d", channel_idx, sorted_id, stim_class), 10, 0, 200, 20, Justification::left, false);
+    g.drawText(String::formatted("PSTH ch-%d unit-%d cl-%d", channel_idx, sorted_id, stim_class), 10, 0, 200, 20, Justification::left, false);
     if (processor)
     {
         std::vector<double> histogram = processor->getHistogram(channel_idx, sorted_id, stim_class);
@@ -165,16 +177,16 @@ void PSTHPlot::paint(Graphics& g)
             float x = 0.0f;
             double max_y = *std::max_element(histogram.begin(), histogram.end());
             //            double min_y = *std::min_element(histogram.begin(), histogram.end());
-            std::cout << max_y << std::endl;
+ //           std::cout << max_y << std::endl;
             for (int i = 0; i < 49; i++)
             {
-                float y1 = max_y == 0 ? 0 : (histogram[i]) / max_y * h;
-                float y2 = max_y == 0 ? 0 : (histogram[i + 1]) / max_y * h;
-                std::cout << y1 << " ";
-                g.drawLine(x, y1, x + dx, y2, 2);
+                float y1 = max_y == 0 ? 0 : float (histogram[i]) / max_y * h;
+                float y2 = max_y == 0 ? 0 : float (histogram[i + 1]) / max_y * h;
+//                std::cout << y1 << " ";
+                g.drawLine(x, h - y1, x + dx, h - y2, 2);
                 x += dx;
             }
-            std::cout << std::endl;
+//            std::cout << std::endl;
         }
     }
 }

@@ -56,6 +56,7 @@ namespace SyncSinkSpace
 
     private:
         SyncSink* processor;
+        int plotCounter = 0;
         SyncSinkCanvas* canvas;
         Viewport* viewport;
         OwnedArray<PSTHPlot> plots;
@@ -65,7 +66,8 @@ namespace SyncSinkSpace
     class PSTHPlot : public Component
     {
     public:
-        PSTHPlot(SyncSink* s, SyncSinkCanvas* c, int channel_idx, int sorted_id, int stim_class);
+        PSTHPlot(SyncSink* s, SyncSinkCanvas* c, SyncSinkDisplay* d,
+            int channel_idx, int sorted_id, int stim_class, int identifier);
         ~PSTHPlot();
 
         void paint(Graphics& g);
@@ -73,12 +75,14 @@ namespace SyncSinkSpace
 
         void updatePlot();
         
-        SyncSinkCanvas* canvas;
         int channel_idx;
         int sorted_id;
         int stim_class;
+        int identifier;
     private:
         SyncSink* processor;
+        SyncSinkDisplay* display;
+        SyncSinkCanvas* canvas;
         Font font;
         String name;
         std::vector<double> histogram;
