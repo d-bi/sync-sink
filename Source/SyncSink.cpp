@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <string.h>
 #include "SyncSink.h"
+#include "SyncSinkEditor.h"
+#include "SyncSinkCanvas.h"
 #include <vector>
 #ifdef _WIN32
 #include <Windows.h>
@@ -57,6 +59,13 @@ SyncSink::~SyncSink()
 	zmq_close(socket);
 	zmq_ctx_destroy(context);
 }
+
+AudioProcessorEditor* SyncSink::createEditor()
+{
+	editor = new SyncSinkEditor(this, true);
+	return editor;
+}
+
 
 void SyncSink::process(AudioSampleBuffer& buffer)
 {
@@ -127,6 +136,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		
 		/* Parse Kofiko */
 		// Beginning of trial: add conditions
+		//std::cout << text << std::endl;
 		if (text.startsWith("ClearDesign"))
 		{
 			conditionMap.clear();
@@ -143,6 +153,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 				std::cout << tokens[i] << std::endl;
 				conditionMap.set(tokens[i], tokens[2]);
 				conditionList.set(tokens[2], numConditions);
+				conditionListInverse.set(numConditions, tokens[2]);
 			}
 			numConditions += 1;
 		}
@@ -174,6 +185,10 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			currentTrialStartTime = -1;
 			currentStimClass = -1;
 			inTrial = false;
+			if (canvas != nullptr) {
+				std::cout << "send update to canvas" << std::endl;
+				canvas->updatePlots();
+			}
 			for (std::vector<std::vector<std::vector<double>>> channelTensor : spikeTensor)
 			{
 				for (std::vector<std::vector<double>> unitTensor : channelTensor)
@@ -183,15 +198,15 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 						for (double val : conditionTensor)
 						{
 							val *= double(nTrials) / double(nTrials + 1);
-							std::cout << val << " ";
+//							std::cout << val << " ";
 						}
-						std::cout << std::endl;
+//						std::cout << std::endl;
 					}
-					std::cout << std::endl;
+//					std::cout << std::endl;
 				}
-				std::cout << std::endl;
+//				std::cout << std::endl;
 			}
-			std::cout << std::endl;
+//			std::cout << std::endl;
 		}
 	}
 }
@@ -274,5 +289,40 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] = double(1) / double(nTrials); // assignment not working
 //			std::cout << spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] << " ";
 		}
+	}
+}
+
+std::vector<double> SyncSink::getHistogram(int channel_idx, int sorted_id, int stim_class)
+{
+	if (channel_idx >= spikeTensor.size()) {
+		return std::vector<double>(50, 0);
+	}
+	if (sorted_id >= spikeTensor[channel_idx].size()) {
+		return std::vector<double>(50, 0);
+	}
+	if (stim_class >= spikeTensor[channel_idx][sorted_id].size())
+	{
+		return std::vector<double>(50, 0);
+	}
+	return spikeTensor[channel_idx][sorted_id][stim_class];
+}
+
+int SyncSink::getNTrial()
+{
+	return nTrials;
+}
+
+void SyncSink::setCanvas(SyncSinkCanvas* c)
+{
+	canvas = c;
+}
+
+void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, int stim_class)
+{
+	if (canvas != nullptr) {
+		std::cout << "add plot to canvas: " << channel_idx << sorted_id
+			<< stim_class << "(" << conditionListInverse[stim_class] << ")"
+			<< std::endl;
+		canvas->addPlot(channel_idx, sorted_id, stim_class);
 	}
 }

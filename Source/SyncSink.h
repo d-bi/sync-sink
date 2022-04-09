@@ -8,6 +8,8 @@
 //namespace must be an unique name for your plugin
 namespace SyncSinkSpace
 {
+	class SyncSinkCanvas;
+
 	class SyncSink : public GenericProcessor
 	{
 	public:
@@ -18,10 +20,10 @@ namespace SyncSinkSpace
 		~SyncSink();
 
 		/** Indicates if the processor has a custom editor. Defaults to false */
-		//bool hasEditor() const { return true; }
+		bool hasEditor() const { return true; }
 
 		/** If the processor has a custom editor, this method must be defined to instantiate it. */
-		//AudioProcessorEditor* createEditor() override;
+		AudioProcessorEditor* createEditor() override;
 
 		/** Optional method that informs the GUI if the processor is ready to function. If false acquisition cannot start. Defaults to true */
 		//bool isReady();
@@ -70,9 +72,15 @@ namespace SyncSinkSpace
 
 		*/
 		//void updateSettings() override;
+		std::vector<double> getHistogram(int channel_idx, int sorted_id, int stim_class);
+		int getNTrial();
+		void setCanvas(SyncSinkCanvas* canvas);
+		void addPSTHPlot(int channel_idx, int sorted_id, int stim_class);
+
 	private:
 		HashMap<String, String> conditionMap; // hashmap for image ids
 		HashMap<String, int> conditionList; // hashmap for condition indexing
+		HashMap<int, String> conditionListInverse; // hashmap for index to condition string
 		int numConditions = 1;
 		int currentStimClass = -1;
 		int64 currentTrialStartTime = -1;
@@ -84,6 +92,9 @@ namespace SyncSinkSpace
 		void* context;
 		void* socket;
 		int dataport;
+
+		SyncSinkCanvas* canvas = nullptr;
+		
 		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SyncSink);
 
 	};
