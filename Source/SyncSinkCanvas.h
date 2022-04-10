@@ -29,8 +29,13 @@ namespace SyncSinkSpace
         void resized();
 
         void updatePlots();
-        void addPlot(int channel_idx, int sorted_id, int stim_class);
+        void addPlot(int channel_idx, int sorted_id, std::vector<int> stimClasses);
 
+        std::vector<Colour> colorList = {
+            Colour(30,118,179), Colour(255,126,13), Colour(43,159,43),
+            Colour(213,38,39), Colour(147,102,188), Colour(139,85,74),
+            Colour(226,118,193), Colour(126,126,126), Colour(187,188,33), 
+            Colour(22,189,206)};
         SyncSink* processor;
 
     private:
@@ -52,7 +57,7 @@ namespace SyncSinkSpace
         void clear();
         
         void updatePlots();
-        void addPSTHPlot(int channel_idx, int sorted_id, int stim_class);
+        void addPSTHPlot(int channel_idx, int sorted_id, std::vector<int> stimClasses);
 
     private:
         SyncSink* processor;
@@ -68,16 +73,19 @@ namespace SyncSinkSpace
     public:
         PSTHPlot(SyncSink* s, SyncSinkCanvas* c, SyncSinkDisplay* d,
             int channel_idx, int sorted_id, int stim_class, int identifier);
+        PSTHPlot(SyncSink* s, SyncSinkCanvas* c, SyncSinkDisplay* d,
+            int channel_idx, int sorted_id, std::vector<int> stimClasses, int identifier);
         ~PSTHPlot();
 
         void paint(Graphics& g);
         void resized();
 
-        void updatePlot();
+        //void updatePlot();
         
         int channel_idx;
         int sorted_id;
-        int stim_class;
+        //int stim_class;
+        std::vector<int> stimClasses;
         int identifier;
     private:
         SyncSink* processor;

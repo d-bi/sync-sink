@@ -143,6 +143,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			conditionList.clear();
 			conditionListInverse.clear();
 			spikeTensor.clear();
+			stimClasses.clear();
 			numConditions = 0;
 		}
 		else if (text.startsWith("AddCondition"))
@@ -157,6 +158,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 				conditionMap.set(tokens[i], tokens[2]);
 				conditionList.set(tokens[2], numConditions);
 				conditionListInverse.set(numConditions, tokens[2]);
+				stimClasses.push_back(numConditions);
 			}
 			numConditions += 1;
 			if (thisEditor != nullptr) 
@@ -329,21 +331,30 @@ void SyncSinkSpace::SyncSink::setEditor(SyncSinkEditor* e)
 	thisEditor = e;
 }
 
-void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, int stim_class)
+void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, std::vector<int> stimClasses)
 {
 	if (canvas != nullptr) {
-		std::cout << "add plot to canvas: " << channel_idx << sorted_id
-			<< stim_class << "(" << conditionListInverse[stim_class] << ")"
-			<< std::endl;
-		canvas->addPlot(channel_idx, sorted_id, stim_class);
+		std::cout << "add plot to canvas: " << channel_idx << sorted_id;
+		for (int stim_class : stimClasses)
+		{
+			std::cout << stim_class << "(" << conditionListInverse[stim_class] << ") ";
+
+		}
+			std::cout << std::endl;
+		canvas->addPlot(channel_idx, sorted_id, stimClasses);
 	}
 }
 
-String SyncSink::getStimClass(int stim_class)
+String SyncSink::getStimClassLabel(int stim_class)
 {
 	if (conditionListInverse.contains(stim_class))
 	{
 		return conditionListInverse[stim_class];
 	}
 	return "";
+}
+
+std::vector<int> SyncSink::getStimClasses()
+{
+	return stimClasses;
 }

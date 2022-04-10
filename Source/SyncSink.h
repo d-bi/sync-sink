@@ -77,14 +77,16 @@ namespace SyncSinkSpace
 		int getNTrial();
 		void setCanvas(SyncSinkCanvas* c);
 		void setEditor(SyncSinkEditor* e);
-		void addPSTHPlot(int channel_idx, int sorted_id, int stim_class);
-		String getStimClass(int stim_class);
+		void addPSTHPlot(int channel_idx, int sorted_id, std::vector<int> stimClasses);
+		String getStimClassLabel(int stim_class);
+		std::vector<int> getStimClasses();
 		int numConditions = -1;
 
 	private:
 		HashMap<String, String> conditionMap; // hashmap for image ids
 		HashMap<String, int> conditionList; // hashmap for condition indexing
 		HashMap<int, String> conditionListInverse; // hashmap for index to condition string
+		std::vector<int> stimClasses;
 		int currentStimClass = -1;
 		int64 currentTrialStartTime = -1;
 		bool inTrial = false;
