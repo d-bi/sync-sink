@@ -340,7 +340,7 @@ void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, std::vector<int> stim
 			std::cout << stim_class << "(" << conditionListInverse[stim_class] << ") ";
 
 		}
-			std::cout << std::endl;
+		std::cout << std::endl;
 		canvas->addPlot(channel_idx, sorted_id, stimClasses);
 	}
 }

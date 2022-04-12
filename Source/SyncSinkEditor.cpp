@@ -50,6 +50,11 @@ void SyncSinkEditor::buttonEvent(Button* button)
         /* tokens[0] == channel_idx; tokens[1] == sorted_id; tokens[2] == stim_class*/
         if (tokens.size() == 3)
         {
+            if (tokens[2].getIntValue() >= processor->numConditions)
+            {
+                std::cout << "stim class specified out of bounds" << std::endl;
+                return;
+            }
             processor->addPSTHPlot(
                 tokens[0].getIntValue(),
                 tokens[1].getIntValue(),
@@ -58,6 +63,11 @@ void SyncSinkEditor::buttonEvent(Button* button)
         }
         else if (tokens.size() == 2)
         {
+            if (processor->numConditions)
+            {
+                std::cout << "empty stim class list" << std::endl;
+                return;
+            }
             processor->addPSTHPlot(
                 tokens[0].getIntValue(),
                 tokens[1].getIntValue(),

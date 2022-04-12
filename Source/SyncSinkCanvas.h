@@ -36,6 +36,8 @@ namespace SyncSinkSpace
             Colour(213,38,39), Colour(147,102,188), Colour(139,85,74),
             Colour(226,118,193), Colour(126,126,126), Colour(187,188,33), 
             Colour(22,189,206)};
+
+        //std::vector<String> conditionList = {"face","object","scramble"};
         SyncSink* processor;
 
     private:

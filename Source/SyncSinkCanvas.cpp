@@ -28,13 +28,15 @@ SyncSinkCanvas::~SyncSinkCanvas()
 void SyncSinkCanvas::paint(Graphics& g)
 {
     g.fillAll(Colours::darkgrey);
-    //for (int i = 0; i < processor->numConditions; i++)
-    //{
-    //    g.setColour(colorList[i % colorList.size()]);
-    //    g.fillRect(getWidth() * 5 / 4 + 10, i * 10, 20, 20);
-    //    g.drawText(String(i) + String(": ") + processor->getStimClassLabel(i),
-    //        getWidth() * 5 / 4 + 30, i * 10, 20, 20, juce::Justification::centred, true);
-    //}
+    std::cout << processor->numConditions << std::endl;
+    for (int i = 0; i < processor->numConditions; i++)
+    {
+        g.setColour(colorList[i % colorList.size()]);
+        g.fillRect(getWidth() * 9 / 10 + 10, i * 20 + 7.5, 20, 5);
+        g.setColour(Colours::white);
+        g.drawText(String(i) + String(": ") + processor->getStimClassLabel(i),
+            getWidth() * 9 / 10 + 30, i * 20, 100, 20, juce::Justification::centred, true);
+    }
 }
 
 void SyncSinkCanvas::refresh()
@@ -85,8 +87,6 @@ void SyncSinkCanvas::addPlot(int channel_idx, int sorted_id, std::vector<int> st
 {
     display->addPSTHPlot(channel_idx, sorted_id, stimClasses);
 }
-
-
 
 SyncSinkDisplay::SyncSinkDisplay(SyncSink* s, SyncSinkCanvas* c, Viewport* v) :
     processor(s), canvas(c), viewport(v)
@@ -206,7 +206,6 @@ void PSTHPlot::paint(Graphics& g)
                 {
                     max_y_all_classes = max_y;
                 }
-                //            double min_y = *std::min_element(histogram.begin(), histogram.end());
      //           std::cout << max_y << std::endl;
                 for (int i = 0; i < 49; i++)
                 {
