@@ -81,6 +81,7 @@ namespace SyncSinkSpace
 
         void paint(Graphics& g);
         void resized();
+        void clearPlot();
 
         //void updatePlot();
         
@@ -96,6 +97,7 @@ namespace SyncSinkSpace
         Font font;
         String name;
         std::vector<double> histogram;
+        bool alive;
     };
 
 }

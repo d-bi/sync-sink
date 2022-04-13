@@ -131,7 +131,6 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		var json (obj);
 		String s = JSON::toString(json);
 		void *str = (void *) s.toRawUTF8();
-		// std::cout << s << std::endl;
 		zmq_send(socket, str, strlen((const char *)str), 0);
 		
 		/* Parse Kofiko */
@@ -154,17 +153,23 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			   tokens[3] == Visible; tokens[4] == 1; tokens[5] == TrialTypes; */
 			for (int i = 6; i < tokens.size(); i++)
 			{
-				std::cout << tokens[i] << std::endl;
+				//std::cout << tokens[i] << std::endl;
 				conditionMap.set(tokens[i], tokens[2]);
-				conditionList.set(tokens[2], numConditions);
-				conditionListInverse.set(numConditions, tokens[2]);
-				stimClasses.push_back(numConditions);
+
 			}
+			conditionList.set(tokens[2], numConditions);
+			conditionListInverse.set(numConditions, tokens[2]);
+			stimClasses.push_back(numConditions);
 			numConditions += 1;
-			if (thisEditor != nullptr) 
+			if (canvas != nullptr)
 			{
-				thisEditor->updateLegend();
+				canvas->update();
 			}
+			for (int stimClass : stimClasses)
+			{
+				std::cout << stimClass << std::endl;
+			}
+			std::cout << text << std::endl;
 		}
 		else if (text.startsWith("TrialStart"))
 		{
@@ -181,6 +186,10 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 				std::cout << "Image ID " << tokens[1] << " not mappable to stimulus class!" << std::endl;
 			}
 			std::cout << "TrialStart for image " << tokens[1] << " at " << timestamp << std::endl;
+			if (thisEditor != nullptr)
+			{
+				thisEditor->updateLegend();
+			}
 		}
 		else if (text.startsWith("TrialAlign"))
 		{
@@ -195,7 +204,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			currentStimClass = -1;
 			inTrial = false;
 			if (canvas != nullptr) {
-				std::cout << "send update to canvas" << std::endl;
+				//std::cout << "send update to canvas" << std::endl;
 				canvas->updatePlots();
 			}
 			for (std::vector<std::vector<std::vector<double>>> channelTensor : spikeTensor)
@@ -206,7 +215,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 					{
 						for (double val : conditionTensor)
 						{
-//							val *= double(nTrials) / double(nTrials + 1);
+							//val *= double(nTrials) / double(nTrials + 1);
 //							std::cout << val << " ";
 						}
 //						std::cout << std::endl;
@@ -285,14 +294,14 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		
 		while (spikeTensor[spikeChannelIdx][sortedID].size() < numConditions)
 		{
-			std::vector<double> thisConditionSpikeTensor(nBins);
+			std::vector<double> thisConditionSpikeTensor(nBins, (double) 0);
 //			std::cout << "create condition tensor" << String(spikeTensor[spikeChannelIdx][sortedID].size()) << std::endl;
 			spikeTensor[spikeChannelIdx][sortedID].push_back(thisConditionSpikeTensor);
 		}
 //		std::vector<double> thisConditionSpikeTensor = thisUnitSpikeTensor[currentStimClass];
 		
 		double offset = double(timestamp - currentTrialStartTime) / double(sampleRate);
-		int bin = floor(offset / 0.01);
+		int bin = floor(offset / ((double) binSize / (double) 1000));
 		if (bin < nBins)
 		{
 			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] += double(1);// / double(nTrials); // assignment not working
@@ -304,14 +313,14 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 std::vector<double> SyncSink::getHistogram(int channel_idx, int sorted_id, int stim_class)
 {
 	if (channel_idx >= spikeTensor.size()) {
-		return std::vector<double>(50, 0);
+		return std::vector<double>(nBins, 0);
 	}
 	if (sorted_id >= spikeTensor[channel_idx].size()) {
-		return std::vector<double>(50, 0);
+		return std::vector<double>(nBins, 0);
 	}
 	if (stim_class >= spikeTensor[channel_idx][sorted_id].size())
 	{
-		return std::vector<double>(50, 0);
+		return std::vector<double>(nBins, 0);
 	}
 	return spikeTensor[channel_idx][sorted_id][stim_class];
 }
@@ -345,6 +354,49 @@ void SyncSink::addPSTHPlot(int channel_idx, int sorted_id, std::vector<int> stim
 	}
 }
 
+void SyncSink::resetTensor()
+{
+	int ch_idx = 0;
+	for (std::vector<std::vector<std::vector<double>>> channelTensor : spikeTensor)
+	{
+		int un_idx = 0;
+		for (std::vector<std::vector<double>> unitTensor : spikeTensor[ch_idx])
+		{
+			int cond_idx = 0;
+			for (std::vector<double> conditionTensor : spikeTensor[ch_idx][un_idx])
+			{
+				for (int i = 0; i < spikeTensor[ch_idx][un_idx][cond_idx].size(); i++)
+				{
+					spikeTensor[ch_idx][un_idx][cond_idx][i] = 0;
+				}
+				while (spikeTensor[ch_idx][un_idx][cond_idx].size() < nBins)
+				{
+					spikeTensor[ch_idx][un_idx][cond_idx].push_back(0);
+				}
+				cond_idx++;
+			}
+			un_idx++;
+		}
+		ch_idx++;
+	}
+	nTrials = 0;
+	if (canvas != nullptr)
+	{
+		canvas->updatePlots();
+		canvas->update();
+	}
+	if (thisEditor != nullptr)
+	{
+		thisEditor->updateLegend();
+	}
+}
+
+void SyncSink::rebin(int n_bins, int bin_size)
+{
+	nBins = n_bins;
+	binSize = bin_size;
+}
+
 String SyncSink::getStimClassLabel(int stim_class)
 {
 	if (conditionListInverse.contains(stim_class))
@@ -352,6 +404,16 @@ String SyncSink::getStimClassLabel(int stim_class)
 		return conditionListInverse[stim_class];
 	}
 	return "";
+}
+
+int SyncSink::getNBins()
+{
+	return nBins;
+}
+
+int SyncSink::getBinSize()
+{
+	return binSize;
 }
 
 std::vector<int> SyncSink::getStimClasses()

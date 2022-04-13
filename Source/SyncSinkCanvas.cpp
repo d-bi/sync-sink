@@ -28,7 +28,7 @@ SyncSinkCanvas::~SyncSinkCanvas()
 void SyncSinkCanvas::paint(Graphics& g)
 {
     g.fillAll(Colours::darkgrey);
-    std::cout << processor->numConditions << std::endl;
+    //std::cout << processor->numConditions << std::endl;
     for (int i = 0; i < processor->numConditions; i++)
     {
         g.setColour(colorList[i % colorList.size()]);
@@ -61,8 +61,8 @@ void SyncSinkCanvas::refreshState()
 
 void SyncSinkCanvas::update()
 {
-    std::cout << "update canvas" << std::endl;
-
+    //std::cout << "update canvas" << std::endl;
+    repaint();
     display->resized();
     display->repaint();
 }
@@ -100,12 +100,12 @@ SyncSinkDisplay::~SyncSinkDisplay()
 void SyncSinkDisplay::paint(Graphics& g)
 {
     g.fillAll(Colours::grey);
-    g.drawText(String(processor->getNTrial()), getLocalBounds(), juce::Justification::centred, true);
+    //g.drawText(String(processor->getNTrial()), getLocalBounds(), juce::Justification::centred, true);
 }
 
 void SyncSinkDisplay::resized()
 {
-    std::cout << "display resized" << std::endl;
+    //std::cout << "display resized" << std::endl;
     setBounds(0, 0, getWidth(), getHeight());
     if (plots.size() > 0)
     {
@@ -128,7 +128,7 @@ void SyncSinkDisplay::clear()
 void SyncSinkDisplay::updatePlots()
 {
     for (PSTHPlot* plot : plots) {
-        std::cout << "updating plot" << std::endl;
+        //std::cout << "updating plot" << std::endl;
         plot->repaint();
     }
 //    repaint();
@@ -149,9 +149,10 @@ void SyncSinkDisplay::addPSTHPlot(int channel_idx, int sorted_id, std::vector<in
     addAndMakeVisible(plot);
     plots.add(plot);
     while (plots.size() > 8) {
+        plots[0]->clearPlot();
         plots.remove(0);
     }
-    std::cout << plots.size() << std::endl;
+    //std::cout << plots.size() << std::endl;
 }
 
 //PSTHPlot::PSTHPlot(SyncSink* s, SyncSinkCanvas* c, SyncSinkDisplay* d,
@@ -176,6 +177,7 @@ PSTHPlot::PSTHPlot(SyncSink* s, SyncSinkCanvas* c, SyncSinkDisplay* d,
     int w_i = identifier % 4;
     int h_i = identifier / 4;
     setBounds(w_i * d->getWidth() / 4, h_i * d->getHeight() / 2, d->getWidth() / 4, d->getHeight() / 2);
+    alive = true;
 }
 
 PSTHPlot::~PSTHPlot()
@@ -184,44 +186,59 @@ PSTHPlot::~PSTHPlot()
 
 void PSTHPlot::paint(Graphics& g)
 {
-    g.fillAll(Colours::white);
-    std::cout << "psth paint " << identifier << std::endl;
-    g.drawRect(0, 0, getWidth(), getHeight());
-    g.setFont(font);
-    g.drawText(String::formatted("PSTH chan-%d unit-%d", channel_idx, sorted_id), 10, 0, 200, 20, Justification::left, false);
-    if (processor)
+    if (alive)
     {
-        double max_y_all_classes = 0;
-        for (int stim_class : stimClasses)
+        int nBins = processor->getNBins();
+        g.fillAll(Colours::white);
+        //std::cout << "psth paint " << identifier << std::endl;
+        g.drawRect(0, 0, getWidth(), getHeight());
+        g.setFont(font);
+        g.drawText(String::formatted("PSTH chan-%d unit-%d", channel_idx, sorted_id), 10, getHeight() - 20, 200, 20, Justification::left, false);
+        if (processor)
         {
-            std::vector<double> histogram = processor->getHistogram(channel_idx, sorted_id, stim_class);
-            if (histogram.size() >= 50) {
-                g.drawText(String(processor->getNTrial()), getLocalBounds(), juce::Justification::centred, true);
-                g.setColour(canvas->colorList[stim_class]); // different colors
-                float dx = getWidth() / float(50);
-                float h = getHeight();
-                float x = 0.0f;
-                double max_y = *std::max_element(histogram.begin(), histogram.end());
-                if (max_y >= max_y_all_classes)
-                {
-                    max_y_all_classes = max_y;
+            double max_y_all_classes = 0;
+            for (int stim_class : stimClasses)
+            {
+                std::vector<double> histogram = processor->getHistogram(channel_idx, sorted_id, stim_class);
+                if (histogram.size() >= nBins) {
+                    //g.drawText(String(processor->getNTrial()), getLocalBounds(), juce::Justification::centred, true);
+                    g.setColour(canvas->colorList[stim_class]); // different colors
+                    float dx = getWidth() / float(50);
+                    float h = getHeight();
+                    float x = 0.0f;
+                    double max_y = *std::max_element(histogram.begin(), histogram.end());
+                    if (max_y >= max_y_all_classes)
+                    {
+                        max_y_all_classes = max_y;
+                    }
+                    //           std::cout << max_y << std::endl;
+                    for (int i = 0; i < nBins - 1; i++)
+                    {
+                        float y1 = max_y_all_classes == 0 ? 0 : float(histogram[i]) / max_y_all_classes * h;
+                        float y2 = max_y_all_classes == 0 ? 0 : float(histogram[i + 1]) / max_y_all_classes * h;
+                        //                std::cout << y1 << " ";
+                        g.drawLine(x, h - y1, x + dx, h - y2, 2);
+                        x += dx;
+                    }
+                    //            std::cout << std::endl;
                 }
-     //           std::cout << max_y << std::endl;
-                for (int i = 0; i < 49; i++)
-                {
-                    float y1 = max_y_all_classes == 0 ? 0 : float(histogram[i]) / max_y_all_classes * h;
-                    float y2 = max_y_all_classes == 0 ? 0 : float(histogram[i + 1]) / max_y_all_classes * h;
-                    //                std::cout << y1 << " ";
-                    g.drawLine(x, h - y1, x + dx, h - y2, 2);
-                    x += dx;
-                }
-                //            std::cout << std::endl;
             }
         }
+    }
+    else
+    {
+        g.fillAll(Colours::white);
+        g.drawRect(0, 0, getWidth(), getHeight());
     }
 }
 
 void PSTHPlot::resized()
 {
+    repaint();
+}
+
+void PSTHPlot::clearPlot()
+{
+    alive = false;
     repaint();
 }

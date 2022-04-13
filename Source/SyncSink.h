@@ -78,7 +78,11 @@ namespace SyncSinkSpace
 		void setCanvas(SyncSinkCanvas* c);
 		void setEditor(SyncSinkEditor* e);
 		void addPSTHPlot(int channel_idx, int sorted_id, std::vector<int> stimClasses);
+		void resetTensor();
+		void rebin(int n_bins, int bin_size);
 		String getStimClassLabel(int stim_class);
+		int getNBins();
+		int getBinSize();
 		std::vector<int> getStimClasses();
 		int numConditions = -1;
 
@@ -93,6 +97,7 @@ namespace SyncSinkSpace
 		std::vector<std::vector<std::vector<std::vector<double>>>> spikeTensor; // n_channels * n_units * n_stim_classes * n_bins tensor for spike counts
 
 		int nBins = 50;
+		int binSize = 10;
 		int nTrials = 0;
 		void* context;
 		void* socket;
