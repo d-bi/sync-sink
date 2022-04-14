@@ -203,7 +203,7 @@ void PSTHPlot::paint(Graphics& g)
                 if (histogram.size() >= nBins) {
                     //g.drawText(String(processor->getNTrial()), getLocalBounds(), juce::Justification::centred, true);
                     g.setColour(canvas->colorList[stim_class]); // different colors
-                    float dx = getWidth() / float(50);
+                    float dx = getWidth() / float(nBins);
                     float h = getHeight();
                     float x = 0.0f;
                     double max_y = *std::max_element(histogram.begin(), histogram.end());

@@ -90,6 +90,7 @@ namespace SyncSinkSpace
 		HashMap<String, String> conditionMap; // hashmap for image ids
 		HashMap<String, int> conditionList; // hashmap for condition indexing
 		HashMap<int, String> conditionListInverse; // hashmap for index to condition string
+		HashMap<int, int> nTrialsByStimClass; // hashmap storing num trials for each condition
 		std::vector<int> stimClasses;
 		int currentStimClass = -1;
 		int64 currentTrialStartTime = -1;

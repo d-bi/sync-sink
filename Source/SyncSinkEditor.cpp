@@ -43,7 +43,7 @@ SyncSinkEditor::SyncSinkEditor(SyncSink* parentNode, bool useDefaultParameterEdi
     addAndMakeVisible(resetTensorButton);
 
     binParamsLabel = new Label("Bin Parameters", "50,10");
-    //binParamsLabel->setEditable(true);
+    binParamsLabel->setEditable(true);
     binParamsLabel->setBounds(10, 90, 100, 20);
     binParamsLabel->setFont(Font("Default", 20, Font::plain));
     addAndMakeVisible(binParamsLabel);

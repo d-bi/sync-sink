@@ -141,9 +141,11 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			conditionMap.clear();
 			conditionList.clear();
 			conditionListInverse.clear();
+			//nTrialsByStimClass.clear();
 			spikeTensor.clear();
 			stimClasses.clear();
 			numConditions = 0;
+			nTrials = 0;
 		}
 		else if (text.startsWith("AddCondition"))
 		{
@@ -159,6 +161,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			}
 			conditionList.set(tokens[2], numConditions);
 			conditionListInverse.set(numConditions, tokens[2]);
+			nTrialsByStimClass.set(numConditions, 0);
 			stimClasses.push_back(numConditions);
 			numConditions += 1;
 			if (canvas != nullptr)
@@ -180,6 +183,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			{
 				currentStimClass = conditionList[conditionMap[tokens[1]]];
 				nTrials += 1;
+				nTrialsByStimClass.set(currentStimClass, nTrialsByStimClass[currentStimClass] + 1);
 			}
 			else
 			{
@@ -200,24 +204,30 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		else if (text.startsWith("TrialEnd"))
 		{
 			std::cout << "TrialEnd at " << timestamp << std::endl;
-			currentTrialStartTime = -1;
-			currentStimClass = -1;
-			inTrial = false;
 			if (canvas != nullptr) {
 				//std::cout << "send update to canvas" << std::endl;
 				canvas->updatePlots();
 			}
+			//if (!nTrialsByStimClass.contains(currentStimClass))
+			//{
+			//	std::cout << "unregistered stim class " << currentStimClass << std::endl;
+			//	return;
+			//}
 			for (std::vector<std::vector<std::vector<double>>> channelTensor : spikeTensor)
 			{
 				for (std::vector<std::vector<double>> unitTensor : channelTensor)
 				{
-					for (std::vector<double> conditionTensor : unitTensor)
+					//std::vector<double> conditionTensor = unitTensor[currentStimClass];
+					int condition_idx = 0;
+					for (int c = 0; c < unitTensor.size(); c++)//std::vector<double> conditionTensor : unitTensor)
 					{
+						std::vector<double> conditionTensor = unitTensor[c];
 						for (double val : conditionTensor)
 						{
-							//val *= double(nTrials) / double(nTrials + 1);
+							val *= double(nTrials) / double(nTrialsByStimClass[c] + 1);
 //							std::cout << val << " ";
 						}
+						condition_idx += 1;
 //						std::cout << std::endl;
 					}
 //					std::cout << std::endl;
@@ -225,6 +235,9 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 //				std::cout << std::endl;
 			}
 //			std::cout << std::endl;
+			currentTrialStartTime = -1;
+			currentStimClass = -1;
+			inTrial = false;
 		}
 	}
 }
@@ -269,7 +282,6 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		// std::cout << s << std::endl;
 		zmq_send(socket, str, strlen((const char *)str), 0);
 
-
 		if (!inTrial || numConditions < 0 || currentStimClass < 0 || currentTrialStartTime < 0)
 		{
 			return; // do not process spike when stimulus is not presented
@@ -302,9 +314,14 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		
 		double offset = double(timestamp - currentTrialStartTime) / double(sampleRate);
 		int bin = floor(offset / ((double) binSize / (double) 1000));
+		if (!nTrialsByStimClass.contains(currentStimClass))
+		{
+			std::cout << "unregistered stim class " << currentStimClass << std::endl;
+			return;
+		}
 		if (bin < nBins)
 		{
-			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] += double(1);// / double(nTrials); // assignment not working
+			spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] += double(1) / double(nTrialsByStimClass[currentStimClass]); // assignment not working
 //			std::cout << spikeTensor[spikeChannelIdx][sortedID][currentStimClass][bin] << " ";
 		}
 	}
