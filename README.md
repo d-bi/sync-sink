@@ -1,5 +1,9 @@
-# Open Ephys plugin template
+# Sync Sink
 
+A plugin for the [Open Ephys GUI](https://github.com/open-ephys/plugin-GUI) that broadcasts real-time signal and event information over ZeroMQ.
+Also plots PSTH curves using Kofiko data received via Network Events.
+
+<!--
 This repository contains a template for building plugins for the [Open Ephys GUI](https://github.com/open-ephys/plugin-GUI). Information on the plugin architecture can be found on [our wiki](https://open-ephys.atlassian.net/wiki/spaces/OEW/pages/950363/Plugin+architecture).
 
 ## Creating a new plugin
@@ -47,9 +51,7 @@ To do so, a _libs_ directory has to be created **at the top level** of the repos
 
 DLLs in the bin directories will be copied to the open-ephys GUI _shared_ folder when installing.
 =======
-# sync-sink
-
-A plugin for the [Open Ephys GUI](https://github.com/open-ephys/plugin-GUI) that broadcasts real-time signal and event information over ZeroMQ.
+--!>
 
 <!--
 # Open Ephys plugin template
