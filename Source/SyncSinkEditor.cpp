@@ -52,6 +52,11 @@ SyncSinkEditor::SyncSinkEditor(SyncSink* parentNode, bool useDefaultParameterEdi
     rebinButton->addListener(this);
     rebinButton->setBounds(110, 90, 80, 20);
     addAndMakeVisible(rebinButton);
+
+    resetButton = new UtilityButton("Reset Vars", Font("Default", 20, Font::plain));
+    resetButton->addListener(this);
+    resetButton->setBounds(200, 90, 80, 20);
+    addAndMakeVisible(resetButton);
 }
 
 SyncSinkEditor::~SyncSinkEditor(){}
@@ -117,6 +122,10 @@ void SyncSinkEditor::buttonEvent(Button* button)
         {
             std::cout << "unable to parse bin param string " << binParamsLabel->getText() << std::endl;
         }
+    }
+    else if (button == resetButton)
+    {
+        processor->clearVars();
     }
 }
 

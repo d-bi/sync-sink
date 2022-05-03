@@ -138,14 +138,11 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		//std::cout << text << std::endl;
 		if (text.startsWith("ClearDesign"))
 		{
-			conditionMap.clear();
-			conditionList.clear();
-			conditionListInverse.clear();
-			//nTrialsByStimClass.clear();
-			spikeTensor.clear();
-			stimClasses.clear();
-			numConditions = 0;
-			nTrials = 0;
+			clearVars();
+			if (canvas != nullptr)
+			{
+				canvas->update();
+			}
 		}
 		else if (text.startsWith("AddCondition"))
 		{
@@ -436,4 +433,20 @@ int SyncSink::getBinSize()
 std::vector<int> SyncSink::getStimClasses()
 {
 	return stimClasses;
+}
+
+void SyncSink::clearVars()
+{
+	conditionMap.clear();
+	conditionList.clear();
+	conditionListInverse.clear();
+	nTrialsByStimClass.clear();
+	spikeTensor.clear();
+	stimClasses.clear();
+	numConditions = 0;
+	nTrials = 0;
+	currentStimClass = -1;
+	currentTrialStartTime = -1;
+	inTrial = false;
+	std::cout << "SyncSink variables cleared" << std::endl;
 }

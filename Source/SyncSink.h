@@ -84,6 +84,7 @@ namespace SyncSinkSpace
 		int getNBins();
 		int getBinSize();
 		std::vector<int> getStimClasses();
+		void clearVars();
 		int numConditions = -1;
 
 	private:

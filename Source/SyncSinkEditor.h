@@ -25,7 +25,7 @@ namespace SyncSinkSpace
         private:
         SyncSink* processor;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SyncSinkEditor);
-        ScopedPointer<UtilityButton> addPlotButton, resetTensorButton, rebinButton;
+        ScopedPointer<UtilityButton> addPlotButton, resetTensorButton, rebinButton, resetButton;
         ScopedPointer<Label> addPlotParamsLabel, stimClassLegendLabel, binParamsLabel;
         Font font;
     };
