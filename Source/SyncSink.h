@@ -86,6 +86,8 @@ namespace SyncSinkSpace
 		std::vector<int> getStimClasses();
 		void clearVars();
 		int numConditions = -1;
+		SyncSinkCanvas* canvas = nullptr;
+		SyncSinkEditor* thisEditor = nullptr;
 
 	private:
 		HashMap<String, String> conditionMap; // hashmap for image ids
@@ -104,9 +106,6 @@ namespace SyncSinkSpace
 		void* context;
 		void* socket;
 		int dataport;
-
-		SyncSinkCanvas* canvas = nullptr;
-		SyncSinkEditor* thisEditor = nullptr;
 		
 		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SyncSink);
 

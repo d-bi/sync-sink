@@ -126,6 +126,10 @@ void SyncSinkEditor::buttonEvent(Button* button)
     else if (button == resetButton)
     {
         processor->clearVars();
+        if (processor->canvas != nullptr)
+        {
+            (processor->canvas)->update();
+        }
     }
 }
 
