@@ -176,6 +176,44 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			StringArray tokens;
 			tokens.addTokens(text, true);
 			/* tokens[0] == TrialStart; tokens[1] == IMGID */
+			std::cout << "TrialStart " << tokens[0] << " " << tokens[1] << std::endl;
+			if (conditionMap.contains(tokens[1]))
+			{
+				currentStimClass = conditionList[conditionMap[tokens[1]]];
+				nTrials += 1;
+				nTrialsByStimClass.set(currentStimClass, nTrialsByStimClass[currentStimClass] + 1);
+			}
+			else
+			{
+				std::cout << "SyncSink::handleBroadcastMessage(): Image ID " << tokens[1] << " not mappable to stimulus class!" << std::endl;
+			}
+			//std::cout << "SyncSink::handleBroadcastMessage(): TrialStart for image " << tokens[1] << " at " << timestamp << std::endl;
+			if (canvas != nullptr)
+			{
+				thisEditor->updateLegend();
+			}
+			//if (conditionMap.contains(tokens[1]))
+			//{
+			//	currentStimClass = conditionList[conditionMap[tokens[1]]];
+			//	nTrials += 1;
+			//	nTrialsByStimClass.set(currentStimClass, nTrialsByStimClass[currentStimClass] + 1);
+			//}
+			//else
+			//{
+			//	std::cout << "Image ID " << tokens[1] << " not mappable to stimulus class!" << std::endl;
+			//}
+			//std::cout << "TrialStart for image " << tokens[1] << " at " << timestamp << std::endl;
+			//if (thisEditor != nullptr)
+			//{
+			//	thisEditor->updateLegend();
+			//}
+		}
+		else if (text.startsWith("TrialType")) // Janis Kofiko
+		{
+			StringArray tokens;
+			tokens.addTokens(text, true);
+			std::cout << "TrialType " << tokens[0] << " " << tokens[1] << std::endl;
+			/* tokens[0] == TrialAlign; tokens[1] == IMGID */
 			if (conditionMap.contains(tokens[1]))
 			{
 				currentStimClass = conditionList[conditionMap[tokens[1]]];
@@ -186,7 +224,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			{
 				std::cout << "Image ID " << tokens[1] << " not mappable to stimulus class!" << std::endl;
 			}
-			std::cout << "TrialStart for image " << tokens[1] << " at " << timestamp << std::endl;
+			std::cout << "TrialType for image " << tokens[1] << " at " << timestamp << std::endl;
 			if (thisEditor != nullptr)
 			{
 				thisEditor->updateLegend();
@@ -221,7 +259,8 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 						std::vector<double> conditionTensor = unitTensor[c];
 						for (double val : conditionTensor)
 						{
-							val *= double(nTrials) / double(nTrialsByStimClass[c] + 1);
+							val *= double(nTrialsByStimClass[currentStimClass]) / double(nTrialsByStimClass[currentStimClass] + 1);
+							//val *= double(nTrials) / double(nTrialsByStimClass[c] + 1);
 //							std::cout << val << " ";
 						}
 						condition_idx += 1;

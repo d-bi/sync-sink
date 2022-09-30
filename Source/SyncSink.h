@@ -100,8 +100,8 @@ namespace SyncSinkSpace
 		bool inTrial = false;
 		std::vector<std::vector<std::vector<std::vector<double>>>> spikeTensor; // n_channels * n_units * n_stim_classes * n_bins tensor for spike counts
 
-		int nBins = 50;
-		int binSize = 10;
+		int nBins = 50; // default num bins
+		int binSize = 10; // default bin sizes
 		int nTrials = 0;
 		void* context;
 		void* socket;
