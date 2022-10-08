@@ -85,7 +85,7 @@ void SyncSinkEditor::buttonEvent(Button* button)
         }
         else if (tokens.size() == 2)
         {
-            if (processor->numConditions < 0)
+            if (processor->numConditions == 0)
             {
                 std::cout << "empty stim class list" << std::endl;
                 return;

@@ -318,7 +318,7 @@ void SyncSink::handleSpike(const SpikeChannel* spikeInfo,
 		// std::cout << s << std::endl;
 		zmq_send(socket, str, strlen((const char *)str), 0);
 
-		if (!inTrial || numConditions < 0 || currentStimClass < 0 || currentTrialStartTime < 0)
+		if (!inTrial || numConditions == 0 || currentStimClass < 0 || currentTrialStartTime < 0)
 		{
 			return; // do not process spike when stimulus is not presented
 		}
@@ -483,7 +483,7 @@ void SyncSink::clearVars()
 	// spikeTensor.clear();
 	resetTensor();
 	stimClasses.clear();
-	numConditions = -1;
+	numConditions = 0;
 	nTrials = 0;
 	currentStimClass = -1;
 	currentTrialStartTime = -1;

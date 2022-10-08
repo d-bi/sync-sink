@@ -85,7 +85,7 @@ namespace SyncSinkSpace
 		int getBinSize();
 		std::vector<int> getStimClasses();
 		void clearVars();
-		int numConditions = -1;
+		int numConditions = 0;
 		SyncSinkCanvas* canvas = nullptr;
 		SyncSinkEditor* thisEditor = nullptr;
 
