@@ -135,7 +135,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 		
 		/* Parse Kofiko */
 		// Beginning of trial: add conditions
-		//std::cout << text << std::endl;
+		std::cout << text << std::endl;
 		if (text.startsWith("ClearDesign"))
 		{
 			clearVars();
@@ -169,7 +169,7 @@ void SyncSink::handleEvent(const EventChannel* eventInfo,
 			{
 				std::cout << stimClass << std::endl;
 			}
-			std::cout << text << std::endl;
+			// std::cout << text << std::endl;
 		}
 		else if (text.startsWith("TrialStart"))
 		{
@@ -480,9 +480,10 @@ void SyncSink::clearVars()
 	conditionList.clear();
 	conditionListInverse.clear();
 	nTrialsByStimClass.clear();
-	spikeTensor.clear();
+	// spikeTensor.clear();
+	resetTensor();
 	stimClasses.clear();
-	numConditions = 0;
+	numConditions = -1;
 	nTrials = 0;
 	currentStimClass = -1;
 	currentTrialStartTime = -1;

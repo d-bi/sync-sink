@@ -128,7 +128,7 @@ void SyncSinkEditor::buttonEvent(Button* button)
         processor->clearVars();
         if (processor->canvas != nullptr)
         {
-            (processor->canvas)->update();
+            // (processor->canvas)->update();
         }
     }
 }

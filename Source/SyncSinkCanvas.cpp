@@ -61,7 +61,7 @@ void SyncSinkCanvas::refreshState()
 
 void SyncSinkCanvas::update()
 {
-    //std::cout << "update canvas" << std::endl;
+    std::cout << "update canvas" << std::endl;
     repaint();
     display->resized();
     display->repaint();
